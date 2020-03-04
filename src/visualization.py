@@ -139,7 +139,7 @@ def plot_history_cv(loss,acc,filename_out = None):
 
 def plot_confusion_matrix(y_test,y_pred,class_names,filename_out = None):
 
-    conf_mat = confusion_matrix(y_test, y_pred,normalize='all')
+    conf_mat = confusion_matrix(y_test, y_pred,normalize='all',labels=range(len(class_names) ) )
     text     = 'Confusion matrix\n'
     text     = text + '|             |' + '|'.join(['{0:13}'.format(class_name) for class_name in class_names]) + '|\n'
     text     = text + '|' + ' -----------:|' * (len(class_names) + 1) + '\n'

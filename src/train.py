@@ -42,7 +42,7 @@ class Resample(Enum):
 
 
 num_epochs = 50
-batch_size = 3000
+batch_size = 10
 
 
 def fit_predict_imbalanced_model(model_name,num_classes,X_train, y_train, X_test, y_test,batch_size = batch_size,epochs=num_epochs):
@@ -75,7 +75,7 @@ def fit_predict_balanced_model(model_name,num_classes,X_train, y_train, X_test, 
     return model,y_pred,y_pred_proba,history
     
 
-def fit_predict_model(model_name,X_train, Y_train, X_test, Y_test,resample):
+def fit_predict_model(model_name,X_train, Y_train, X_test, Y_test,class_names,resample):
     start_time  = time.time()
     history     = None
     num_feats   = X_train.shape[1]
@@ -114,7 +114,17 @@ def fit_predict_model(model_name,X_train, Y_train, X_test, Y_test,resample):
         lr_fit          = model.fit(X_t_train, Y_t_train)
         y_pred_proba    = model.predict_proba(X_test)
         y_pred          = model.predict(X_test)
+        print(model.classes_)
+        print(len(model.classes_) )
 
+        #print(y_pred)
+        #print(y_pred_proba.shape,len(class_names),np.argmax(y_pred_proba,axis=1))
+        #assert y_pred_proba.shape[1] == len(class_names)
+        if y_pred_proba.shape[1] < len(class_names):
+            print("WARNING: Not all classes are present in output of predict_proba()")
+            d               = len(class_names) - y_pred_proba.shape[1]
+            z               = np.zeros((y_pred_proba.shape[0],d))
+            y_pred_proba    = np.concatenate((y_pred_proba,z),axis=1)
     elapsed_time    = time.time() - start_time
 
     return elapsed_time, (model,y_pred,y_pred_proba,history)
@@ -147,7 +157,7 @@ def train_cv(trace,X,Y,class_names,model_name,cv=3,resample=None):
         Y_t_train   = Y[train_idxs]
         Y_t_test    = Y[test_idxs]
 
-        elapsed_time, (model,y_pred,y_pred_proba,history) = fit_predict_model(model_name,X_t_train, Y_t_train, X_t_test, Y_t_test,resample)
+        elapsed_time, (model,y_pred,y_pred_proba,history) = fit_predict_model(model_name,X_t_train, Y_t_train, X_t_test, Y_t_test,class_names,resample)
 
         if i == 0:
             trace.write_model_info_and_training_info(model,parms)
@@ -179,10 +189,10 @@ def train(train_name,model_name,X_train, X_test, Y_train, Y_test,class_names,cv,
 
     for model_name in model_names:
         if resample == Resample.all:
-            if model_name == 'MLP' or model_name == 'DeepFM':
+            if model_name[0:3] == 'MLP' or model_name == 'DeepFM':
                 resample_methods = [ None, Resample.balancedbatch ]
             else:
-                resample_methods = [ None, Resample.random_over_sampler,Resample.random_under_sampler,Resample.smote ]
+                resample_methods = [ None, Resample.random_over_sampler ]
         else:
             resample_methods = [ resample ]
 
@@ -194,7 +204,7 @@ def train(train_name,model_name,X_train, X_test, Y_train, Y_test,class_names,cv,
             if test:
                 trace_test = Trace('test',train_name,model_name=model_name,resample=resample_method,y_shape=Y_test.shape, config=None,class_names=class_names)
 
-                elapsed_time, (model,y_pred,y_pred_proba,history) = fit_predict_model(model_name,X_train, Y_train, X_test, Y_test,resample_method)
+                elapsed_time, (model,y_pred,y_pred_proba,history) = fit_predict_model(model_name,X_train, Y_train, X_test, Y_test,class_names,resample_method)
 
                 trace_test.append_history(history)
                 trace_test.append_results(None,Y_test,y_pred,y_pred_proba,elapsed_time)
@@ -295,6 +305,7 @@ if __name__ == '__main__':
     model_name                        = 'Multinomial'
     model_name                        = 'RandomForest'
     model_name                        = 'MLP_MultiTarget'
+    model_name                        = 'RandomForest'
     train_name                        = 'Run-001'
     resample                          = Resample.random_over_sampler
     resample                          = Resample.smote
@@ -302,8 +313,9 @@ if __name__ == '__main__':
     resample                          = Resample.all
     resample                          = None
 
-    X_train, X_test, Y_train, Y_test,class_names  = get_data('../data/v1','audio-30.npy',['target-Smoker.pkl','target-Citrus fruits.pkl'],verbose=True)
+    if False:
+        X_train, X_test, Y_train, Y_test,class_names  = get_data('../data/v1','audio-30.npy',['target-Smoker.pkl','target-Citrus fruits.pkl'],verbose=True)
 
-    train(train_name,model_name,X_train, X_test, Y_train, Y_test,class_names,cv,resample,config=None,verbose=False)
+        train(train_name,model_name,X_train, X_test, Y_train, Y_test,class_names,cv,resample,config=None,verbose=False)
     #create_learning_curve(train_name=train_name,data_filename='../data/Medical Appointments.csv',resample=Resample.random_over_sampler,
     #               cv=10,model_name=model_name,filename_out='../reports/final/results/lr_learning_cur.png')

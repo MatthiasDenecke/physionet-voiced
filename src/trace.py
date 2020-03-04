@@ -52,9 +52,7 @@ def cap_auc_score(y_test, y_pred_proba,multi_class='raise'):
     total           = y_test.shape[0]
     class_1_count   = np.sum(y_test) 
     class_0_count   = total - class_1_count
-    print(y_pred_proba)
-    print(y_test)
-    sys.exit(1)
+    
     model_y         = [y for _, y in sorted(zip(y_pred_proba, y_test), reverse = True)]
     y_values        = np.append([0], np.cumsum(model_y))
     x_values        = np.arange(0, total + 1)
@@ -67,7 +65,7 @@ def cap_auc_score(y_test, y_pred_proba,multi_class='raise'):
 
 def roc_auc_score_FIXED(y_true, y_pred,num_classes):
     if len(np.unique(y_true)) < num_classes: # bug in roc_auc_score
-        print(y_true,y_pred, np.argmax(y_pred,axis=1))
+        #print(y_true,y_pred, np.argmax(y_pred,axis=1))
         
         return accuracy_score(y_true, np.argmax(y_pred,axis=1))
     return roc_auc_score(y_true, y_pred,multi_class='ovr')
@@ -148,6 +146,7 @@ class Trace:
                 roc_auc             = roc_auc_score_FIXED(y_test, y_pred_proba,self.num_classes )
                 cap_auc             = 0 # cap_auc_score(y_test, y_pred_proba)
 
+           
             #print(self.y_test[valid_idxs].shape,y_test.shape)
             self.y_test[valid_idxs] = y_test.reshape(self.y_test[valid_idxs].shape)
             self.y_pred[valid_idxs] = y_pred.reshape(-1,1)
@@ -225,7 +224,7 @@ class Trace:
 
 
     def __write_confusion_matrix(self,y_test,y_pred,filename):
-        c = confusion_matrix(y_test,y_pred,normalize='all')
+        c = confusion_matrix(y_test,y_pred,normalize='all',labels=range(len(self.class_names) ) )
         d = pd.DataFrame(data=c,columns=self.class_names,index=self.class_names)
         with open(os.path.join(self.foldername,filename + '.json'),'w') as file:
             print(json.dumps(json.loads(d.to_json() ),indent=2),file=file)

@@ -9,11 +9,8 @@ from sklearn.svm import LinearSVC,SVC
 
 __models = {
         'MLP'                   : ( True,None ),
-        'MLP_MultiTarget'       : ( True,None ),
-        #'DeepFM'                : ( True,None ),
-        'Multinomial'           : ( False,MultinomialNB() ),
+        #'MLP_MultiTarget'       : ( True,None ),
         'RandomForest'          : ( False,RandomForestClassifier(n_estimators=200, max_depth=3, random_state=0) ),
-        'SGDClassifier'         : ( False,SGDClassifier(loss='log', penalty='l2', alpha=1e-3, random_state=0,max_iter=20, tol=None) ),
         'LogisticRegression'    : ( False,LogisticRegression(random_state=0,max_iter=4000,solver='saga') ),
         'RadialSVC'             : ( False, SVC(kernel='rbf',probability=True)),
         'LinearSVC'             : ( False, SVC(kernel='linear',probability=True))

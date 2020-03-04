@@ -16,14 +16,16 @@ import argparse
 
 from utils import make_filename
 from data import load_data_csv,clean_data,describe_data,encode_data
-from train import train,Resample,create_model
+from train import train,Resample,create_model,get_data
 from compare import compare
 from visualization import plot_class_distribution_histogram, plot_pca,plot_correlation
 from sklearn.decomposition import PCA
 
 
 scale5 = ['never','almost never','sometimes','almost always','always']
-meta   = {  'Age'                                       : { 'encoding' : 'float', 'order' : None },
+meta   = {  
+            'Diagnosis_Simple'                          : { 'encoding' : 'label', 'order' : 'alphabetical' },
+            'Age'                                       : { 'encoding' : 'float', 'order' : None },
             'Gender'                                    : { 'encoding' : 'label', 'order' : None },
             'Diagnosis'                                 : { 'encoding' : 'label', 'order' : 'alphabetical' },
             'Occupation status'                         : { 'encoding' : 'label', 'order' : 'alphabetical' },
@@ -31,14 +33,15 @@ meta   = {  'Age'                                       : { 'encoding' : 'float'
             'Reflux Symptom Index (RSI) Score'          : { 'encoding' : 'float', 'order' : None },
             'Smoker'                                    : { 'encoding' : 'label', 'order' : [ 'no','casual smoker','yes' ] }, 
             'Number of cigarettes smoked per day'       : { 'encoding' : 'float', 'order' : None }, 
-            'Alcohol consumption'                       : { 'encoding' : 'label', 'order' : [ 'nondrinker','casual drinker','habitual drinker' ] },
             "Amount of water's litres drink every day"  : { 'encoding' : 'float', 'order' : None },
+            'Alcohol consumption'                       : { 'encoding' : 'label', 'order' : [ 'nondrinker','casual drinker','habitual drinker' ] },
             'Carbonated beverages'                      : { 'encoding' : 'label', 'order' : scale5 },
             'Tomatoes'                                  : { 'encoding' : 'label', 'order' : scale5 }, 
             'Coffee'                                    : { 'encoding' : 'label', 'order' : scale5 }, 
             'Chocolate'                                 : { 'encoding' : 'label', 'order' : scale5 }, 
             'Soft cheese'                               : { 'encoding' : 'label', 'order' : scale5 }, 
-            'Citrus fruits'                             : { 'encoding' : 'label', 'order' : scale5 } }
+           'Citrus fruits'                              : { 'encoding' : 'label', 'order' : scale5 } 
+           }
 
 
 
@@ -110,20 +113,31 @@ def prepare(audio_filename,target_filename,meta,n_components,folder,verbose=True
             print("Creating '" + fn + "'.")
 
 
-def basic():
+def basic_pipeline():
     audio_filename  = '../data/audio_features.csv'  
-    target_filename = '../data/individual_features.csv'  
-    report_folder   = '../reports/final'
+    target_filename = '../data/individual_features_ext.csv'  
+    report_folder   = '../reports/final-new'
     verbose         = True
     n_components    = [15,20,30,None]
-    folder          = '../data/v1'
+    folder          = '../data/v2'
     train_name      = 'Run-001'
 
-    #explore(audio_filename,target_filename,meta,report_folder,verbose)
-    #prepare(audio_filename,target_filename,meta,n_components,folder,verbose)
-    compare(train_name=train_name)
+    explore(audio_filename,target_filename,meta,report_folder,verbose)
+    prepare(audio_filename,target_filename,meta,n_components,folder,verbose)
+    
+    for n,m in meta.items():
+        if m['encoding'] == 'label':
+            print(n)
+            target_filename = 'target-' + n + '.pkl'
+            model_name      = None # 'MLP'
+            train_name      = 'Run-' + n
+            X_train, X_test, Y_train, Y_test,class_names  = get_data('../data/v1','audio-30.npy',target_filename,test_size=0.182,verbose=True)
+            
+            train(train_name=train_name,model_name=model_name,X_train=X_train, X_test=X_test, Y_train=Y_train, Y_test=Y_test,
+                  class_names=class_names,cv=10,resample=Resample.all,config=None,verbose=False)
+            
+            compare(train_name=train_name)
 
-    sys.exit(1)
 
 def main():
     
@@ -180,6 +194,6 @@ def main():
 
 
 if __name__ == '__main__':
-    basic()
+    basic_pipeline()
     main()
 

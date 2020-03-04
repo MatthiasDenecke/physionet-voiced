@@ -16,6 +16,7 @@ rc={'font.size': 12, 'axes.labelsize': 24, 'legend.fontsize': 16.0,
     'axes.titlesize': 32, 'xtick.labelsize': 12, 'ytick.labelsize': 8}
 sns.set(rc=rc)
 
+
 def show_roc_curve(y_test,y_pred,title,model_name,filename_out = None):
     plt.figure(figsize=(16, 12))
     plt.plot([0, 1], [0, 1], 'k--')
@@ -115,6 +116,8 @@ def create_comparisons(dataset,names,samples,foldername,tpe):
             v[key][name + ' ' + sample]  = data[key]['values']
 
     for key in keys:
+        print(key)
+        print(v[key])
         df = pd.DataFrame(v[key])
         fn = os.path.join(foldername,key + '.' + tpe + '.png')
         print('  Creating',fn)
